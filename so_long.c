@@ -1,17 +1,7 @@
 
 
 #include "so_long.h"
-typedef struct s_data {
-	void	*mlx;
-	void	*win;
-	void	*img;
-	void	*floor;
-	int		img_width;
-	int		img_height;
-	int		pos_y;
-	int		pos_x;
-	
-}	t_data;
+
 
 // void	my_mlx_pixel_put(t_data *data, int x, int y, int color)
 // {
@@ -30,25 +20,25 @@ typedef struct s_data {
 // }
 void movings (t_data *tab, int key)
 {
-	if(key == 2 && tab->pos_x + 64 < 1920) //derecha
+	if(key == 2 && tab->pos_x + 64 < tab->win_width) //derecha
 	{
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->floor, tab->pos_x , tab->pos_y);
 		tab->pos_x += 64;
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->img, tab->pos_x , tab->pos_y);
 	}
-	if(key == 0 && tab->pos_x - 64 >= 0) //izquierda
+	if(key == 0 && tab->pos_x - 64 >= 0 ) //izquierda
 	{
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->floor, tab->pos_x , tab->pos_y);
 		tab->pos_x -= 64;
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->img, tab->pos_x , tab->pos_y);
 	}
-	if(key == 13 && tab->pos_y - 64 >= 0) //arriba
+	if(key == 13 && tab->pos_y - 64 >= 0 ) //arriba
 	{
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->floor, tab->pos_x , tab->pos_y);
 		tab->pos_y -= 64;
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->img, tab->pos_x , tab->pos_y );
 	}
-	if(key == 1 && tab->pos_y + 64 < 1080) //abajo
+	if(key == 1 && tab->pos_y + 64 < tab->win_height) //abajo
 	{
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->floor, tab->pos_x , tab->pos_y);
 		tab->pos_y += 64;
@@ -115,18 +105,63 @@ int	choose_key(int key, t_data *vars)
 // 	mlx_loop(tab.mlx);
 
 // }
+
+void	put_image(t_data tab)
+{
+	tab.img = mlx_xpm_file_to_image(tab.mlx, "./images/image.xpm", &tab.img_width, &tab.img_height);
+	mlx_put_image_to_window(tab.mlx, tab.win, tab.img, tab.pos_x, tab.pos_y);
+}
+
+void	put_map(t_data map)
+{
+	int	x;
+	int	y;
+
+	map.obstacle = mlx_xpm_file_to_image(map.mlx,"./images/obstacle.xpm",&map.img_width, &map.img_height);
+	y = 0;
+	while(y + 64 <= map.win_height)
+	{
+		printf("%d %d\n",y,map.win_height);
+
+		if(y == 0 || y == map.win_height - 64)
+		{
+			x = 0;
+			while(x + 64 <= map.win_width)
+			{
+				mlx_put_image_to_window(map.mlx, map.win, map.obstacle,x, y);
+				x +=64;
+			}
+		}
+		else
+		{
+			mlx_put_image_to_window(map.mlx, map.win, map.obstacle,0, y);
+			mlx_put_image_to_window(map.mlx, map.win, map.obstacle,map.win_width-64, y);
+		}
+
+		y += 64;
+	}
+				printf("hola\n");
+
+}
+
 int	main(void)
 {
 	t_data tab;
 	
 	//inizializar todas las imagenes y los valores de las posiciones de la misma manera que el mapa
-	tab.pos_x=0;
-	tab.pos_y=0;
-	tab.mlx = mlx_init();
-	tab.win = mlx_new_window(tab.mlx, 1920, 1080, "mtacunan solong");
-	tab.img = mlx_xpm_file_to_image(tab.mlx, "./image.xpm", &tab.img_width, &tab.img_height);
-	tab.floor = mlx_xpm_file_to_image(tab.mlx, "./floor.xpm", &tab.img_width, &tab.img_height);
+	tab.pos_x=64;
+	tab.pos_y=64;
 
+	tab.win_width = 1920;
+	tab.win_height = 1024;
+	tab.mlx = mlx_init();
+	tab.win = mlx_new_window(tab.mlx, tab.win_width, tab.win_height, "mtacunan solong");
+
+	/*funcion paara leer maapa y poner obstculos y bordes*/
+	put_map(tab);
+
+	tab.img = mlx_xpm_file_to_image(tab.mlx, "./images/image.xpm", &tab.img_width, &tab.img_height);
+	tab.floor = mlx_xpm_file_to_image(tab.mlx, "./images/floor.xpm", &tab.img_width, &tab.img_height);
 	mlx_put_image_to_window(tab.mlx, tab.win, tab.img, tab.pos_x, tab.pos_y);
 
 //holdea las teclas
