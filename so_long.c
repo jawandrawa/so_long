@@ -2,40 +2,39 @@
 
 #include "so_long.h"
 
-int	its_valid(t_data tab, int key)
+int	close_win_x ()
 {
-	int i;
-	int j;
-	
+	exit(0);
+}
+
+int	its_valid(t_data *tab, int key, int i , int j)
+{
+	if (tab->table[i][j] == 'C')
+	{
+		tab->coins_collect++;
+		tab->table[i][j] = '0';
+	}
 	if(key == 2) //derecha
-	{	
-		i = tab.pos_y  / 64;
-		j = (tab.pos_x + 64) / 64;
-		if (tab.pos_x + 64 >= tab.win_width || tab.table[i][j] == '1')
+	{
+		if (tab->table[i][j + 1] == 'E'|| tab->table[i][j + 1] == '1')
 			return(0);
 		return(1);
 	}
 	else if(key == 0) //izquierda
 	{
-		i = tab.pos_y  / 64;
-		j = (tab.pos_x - 64) / 64;
-		if (tab.pos_x - 64 < 0 || tab.table[i][j] == '1')
+		if (tab->table[i][j - 1] == '1')
 			return(0);
 		return(1);
 	}
 	else if(key == 1) //abajo
 	{
-		i = (tab.pos_y + 64) / 64;
-		j = tab.pos_x / 64;
-		if (tab.pos_y + 64 >= tab.win_height || tab.table[i][j] == '1')
+		if (tab->table[i + 1][j] == 'E' || tab->table[i + 1][j] == '1')
 			return(0);
 		return(1);
 	}
 	else if(key == 13) //arriba
 	{
-		i = (tab.pos_y - 64) / 64;
-		j = tab.pos_x / 64;
-		if (tab.pos_y - 64 < 0 || tab.table[i][j] == '1')
+		if (tab->table[i - 1][j] == 'E'|| tab->table[i - 1][j] == '1')
 			return(0);
 		return(1);
 	}
@@ -43,46 +42,49 @@ int	its_valid(t_data tab, int key)
 }
 void movings (t_data *tab, int key)
 {
-	if(key == 2 && its_valid(*tab,2)) //derecha
+	if(key == 2 && its_valid(tab,2,tab->pos_y/tab->img_height,tab->pos_x/tab->img_width)) //derecha
 	{
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->floor, tab->pos_x , tab->pos_y);
-		tab->pos_x += 64;
+		tab->pos_x += tab->img_width;
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->img, tab->pos_x , tab->pos_y);
 	}
-	if(key == 0 &&its_valid(*tab,0) ) //izquierda
+	if(key == 0 &&its_valid(tab,0,tab->pos_y/tab->img_height,tab->pos_x/tab->img_width)) //izquierda
 	{
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->floor, tab->pos_x , tab->pos_y);
-		tab->pos_x -= 64;
+		tab->pos_x -= tab->img_width;
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->img, tab->pos_x , tab->pos_y);
 	}
-	if(key == 13 && its_valid(*tab,13) ) //arriba
+	if(key == 13 && its_valid(tab,13,tab->pos_y/tab->img_height,tab->pos_x/tab->img_width)) //arriba
 	{
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->floor, tab->pos_x , tab->pos_y);
-		tab->pos_y -= 64;
+		tab->pos_y -= tab->img_height;
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->img, tab->pos_x , tab->pos_y );
 	}
-	if(key == 1 && its_valid(*tab,1)) //abajo
+	if(key == 1 && its_valid(tab,1,tab->pos_y/tab->img_height,tab->pos_x/tab->img_width)) //abajo
 	{
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->floor, tab->pos_x , tab->pos_y);
-		tab->pos_y += 64;
+		tab->pos_y += tab->img_height;
 		mlx_put_image_to_window(tab->mlx, tab->win, tab->img, tab->pos_x ,tab->pos_y);
 	}
 	return;
 }
 
-int	choose_key(int key, t_data *vars)
+int	choose_key(int key, t_data *tab)
 {
 	//escp : 53
 	if(key == 53)
 	{
-		mlx_destroy_image(vars->mlx,vars->img);
- 		mlx_destroy_window(vars->mlx, vars->win);
+		mlx_destroy_image(tab->mlx,tab->img);
+ 		mlx_destroy_window(tab->mlx, tab->win);
 		exit(0);
 	}
 	if (key == 2 || key == 0 ||  key == 1 || key == 13)
 	{
-		printf("%p",vars);
-		movings(vars,key);
+		if (tab->table[tab->pos_y/tab->img_height][tab->pos_x/tab->img_width] == 'E' && tab->coins_collect == tab->coins)
+			exit(1);
+		movings(tab,key);
+
+		printf("%i\n",tab->coins_collect);
 	}
 
 	//a : 0
@@ -95,9 +97,9 @@ int	choose_key(int key, t_data *vars)
 
 int get_lines(char  *table)
 {
-	int cont;
+	int 	cont;
 	char	*aux;
-	int	fd;
+	int		fd;
 
 	fd = open (table, O_RDONLY);
 	cont = 0;
@@ -150,6 +152,7 @@ void put_table(t_data *map)
 	map->img = mlx_xpm_file_to_image(map->mlx,"./images/image.xpm",&map->img_width, &map->img_height);
 	map->floor = mlx_xpm_file_to_image(map->mlx, "./images/floor.xpm", &map->img_width, &map->img_height);
 	map->colect= mlx_xpm_file_to_image(map->mlx, "./images/colect.xpm", &map->img_width, &map->img_height);
+	map->exit= mlx_xpm_file_to_image(map->mlx, "./images/exit.xpm", &map->img_width, &map->img_height);
 	while(i < lines)
 	{
 		j = 0;
@@ -166,10 +169,40 @@ void put_table(t_data *map)
 			}
 			else if(map->table[i][j] == 'C')
 				mlx_put_image_to_window(map->mlx, map->win, map->colect,j * map->img_width , i * map->img_height);
+			else if(map->table[i][j] == 'E')
+				mlx_put_image_to_window(map->mlx, map->win, map->exit,j * map->img_width , i * map->img_height);
 			j++;
 		}
 		i++;
 	}
+}
+
+
+void	get_coins(t_data *map)
+{
+	int	coins;
+	int	lines;
+	int i;
+	int	j;
+
+	i = 0;
+	coins = 0;
+	lines = get_lines("./test.ber");
+	while(i < lines)
+	{
+		j = 0;
+		while(map->table[i][j])
+		{
+			// if (map->table[i][j] != 'C' && map->table[i][j] != '0' && 
+			// 	map->table[i][j] != '1' && map->table[i][j] != 'P' && map->table[i][j] != 'E')
+			// 	close_win_x();
+			if (map->table[i][j] == 'C')
+				coins++;
+			j++;
+		}
+		i++;
+	}
+	map->coins = coins;
 }
 
 int	main(void)
@@ -180,10 +213,9 @@ int	main(void)
 
 	tab.img_height = 64;
 	tab.img_width = 64;
+	tab.coins_collect = 0;
 	get_table(&tab,"./test.ber");
-
-	// tab.win_width = 1920;
-	// tab.win_height = 1024;
+	get_coins(&tab);
 	tab.mlx = mlx_init();
 	tab.win = mlx_new_window(tab.mlx, tab.win_width, tab.win_height, "mtacunan solong");
 
