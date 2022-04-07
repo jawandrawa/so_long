@@ -1,28 +1,65 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: mtacunan <mtacunan@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/03/21 18:44:38 by mtacunan          #+#    #+#             */
+/*   Updated: 2022/04/07 14:48:32 by mtacunan         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "so_long.h"
 
-void get_table(int fd, t_data *map)
+void	put_image(void *name_image, int i, int j, t_data *map)
 {
-	int	i;
-
-	i = 0;
-	map->table = malloc(sizeof(char *)*5);
-	while(i<5)
-	{
-		map->table[i]=get_next_line(fd);
-		//printf("gola\n");
-		i++;
-	}
+	mlx_put_image_to_window(map->mlx, map->win, name_image, \
+	j * map->img_width, i * map->img_height);
 }
-int main()
+
+int	get_lines(char *table)
 {
-	t_data test;
-	int fd;
-	int i= 0;
-	fd = open ("./test.ber", O_RDONLY);
-	get_table(fd,&test);
-	while(i <5)
+	int		cont;
+	char	*aux;
+	int		fd;
+
+	fd = open (table, O_RDONLY);
+	cont = 0;
+	aux = "";
+	while (aux)
 	{
-	printf("%s",test.table[i]);
-	i++;
+		aux = get_next_line(fd);
+		if (!aux)
+			break ;
+		cont++;
+		free(aux);
 	}
+	free(aux);
+	close(fd);
+	return (cont);
+}
+
+void	ft_error(char *msg, t_data *map)
+{
+	write(2, "Error", 6);
+	if (msg)
+	{
+		write(2, ": ", 3);
+		write(2, msg, ft_strlen(msg));
+	}
+	write(2, "\n", 1);
+	if (map->lines > 0)
+		free_map(map);
+	exit(1);
+}
+
+void	free_map(t_data *map)
+{
+	while (map->lines >= 0)
+	{
+		free(map->table[map->lines - 1]);
+		map->lines--;
+	}
+	free(map->table);
 }

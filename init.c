@@ -6,7 +6,7 @@
 /*   By: mtacunan <mtacunan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/16 15:11:23 by mtacunan          #+#    #+#             */
-/*   Updated: 2022/03/16 17:21:25 by mtacunan         ###   ########.fr       */
+/*   Updated: 2022/04/07 14:51:40 by mtacunan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,40 +14,41 @@
 
 void	get_table(t_data *map, char *table)
 {
-	/*check que termine en .ber*/
-	int	i;
-	int	lines;
-	int	fd;
-	int	range_x;
+	int		i;
+	int		rd;
+	int		range_x;
 
 	i = 0;
-	fd = open (table, O_RDONLY);
-	lines = get_lines(table);
-	map->win_height = lines * map->img_height;
-	map->table = malloc(sizeof(char *) * lines);
-	while (i < lines)
+	rd = open (table, O_RDONLY);
+	if (!map->lines)
+		ft_error("Introduzca un mapa válido", map);
+	map->win_height = map->lines * map->img_height;
+	map->table = malloc(sizeof(char *) * map->lines);
+	if (!map->table)
+		return ;
+	while (i < map->lines)
 	{
-		map->table[i] = get_next_line(fd);
+		map->table[i] = get_next_line(rd);
+		if (!map->table[i])
+		{
+			write(2, "Error: el mapa solo puede contener \
+un salto de linea al final.\n", 63);
+			exit (1);
+		}
 		i++;
 	}
-	range_x = ft_strlen(map->table[0]) - 1;
+	range_x = ft_strlen(map->table[0]);
 	map->win_width = range_x * map->img_width;
-	close(fd);
+	close(rd);
 }
 
-void	put_image(void *name_image, int i, int j,t_data *map)
-{
-	mlx_put_image_to_window(map->mlx, map->win, name_image, \
-	j * map->img_width, i * map->img_height);
-}
-
-void	put_table(t_data *map, char *filename)
+void	put_table(t_data *map)
 {
 	int	i;
 	int	j;
 
 	i = 0;
-	while (i < get_lines(filename))
+	while (i < map->lines)
 	{
 		j = 0;
 		while (map->table[i][j])
@@ -70,17 +71,15 @@ void	put_table(t_data *map, char *filename)
 	}
 }
 
-void	get_coins(t_data *map, char *filename)
+void	get_coins(t_data *map)
 {
 	int	coins;
-	int	lines;
 	int	i;
 	int	j;
 
 	i = 0;
 	coins = 0;
-	lines = get_lines(filename);
-	while (i < lines)
+	while (i < map->lines)
 	{
 		j = 0;
 		while (map->table[i][j])
@@ -94,50 +93,45 @@ void	get_coins(t_data *map, char *filename)
 	map->coins = coins;
 }
 
-int	get_lines(char *table)
+void	init_images(t_data *map)
 {
-	int		cont;
-	char	*aux;
-	int		fd;
-
-	fd = open (table, O_RDONLY);
-	cont = 0;
-	aux = "";
-	while (aux)
-	{
-		aux = get_next_line(fd);
-		if (!aux)
-			break ;
-		cont++;
-		free(aux);
-	}
-	close(fd);
-	free(aux);
-	return (cont);
+	map->obstacle = mlx_xpm_file_to_image(map->mlx, "./images/obstacle.xpm", \
+		&map->img_width, &map->img_height);
+	map->img = mlx_xpm_file_to_image(map->mlx, "./images/img_d.xpm", \
+		&map->img_width, &map->img_height);
+	map->floor = mlx_xpm_file_to_image(map->mlx, "./images/floor.xpm", \
+		&map->img_width, &map->img_height);
+	map->colect = mlx_xpm_file_to_image(map->mlx, "./images/colect.xpm", \
+		&map->img_width, &map->img_height);
+	map->exit = mlx_xpm_file_to_image(map->mlx, "./images/exit.xpm", \
+		&map->img_width, &map->img_height);
+	map->img_u = mlx_xpm_file_to_image(map->mlx, "./images/img_u.xpm", \
+		&map->img_width, &map->img_height);
+	map->img_r = mlx_xpm_file_to_image(map->mlx, "./images/img_r.xpm", \
+		&map->img_width, &map->img_height);
+	map->img_l = mlx_xpm_file_to_image(map->mlx, "./images/img_l.xpm", \
+		&map->img_width, &map->img_height);
+	map->img_d = mlx_xpm_file_to_image(map->mlx, "./images/img_d.xpm", \
+		&map->img_width, &map->img_height);
 }
 
 void	init_map(t_data *map, char *filename)
 {
-	map->mlx = mlx_init();
-	map->obstacle = mlx_xpm_file_to_image(map->mlx, "./images/obstacle.xpm", \
-	&map->img_width, &map->img_height);
-	map->img = mlx_xpm_file_to_image(map->mlx, "./images/image.xpm", \
-	&map->img_width, &map->img_height);
-	map->floor = mlx_xpm_file_to_image(map->mlx, "./images/floor.xpm", \
-	&map->img_width, &map->img_height);
-	map->colect = mlx_xpm_file_to_image(map->mlx, "./images/colect.xpm", \
-	&map->img_width, &map->img_height);
-	map->exit = mlx_xpm_file_to_image(map->mlx, "./images/exit.xpm", \
-	&map->img_width, &map->img_height);
-	if(!map->obstacle || !map->img)
+	map->lines = get_lines(filename);
+	get_table(map, filename);
+	get_coins(map);
+	if (!validate_map(map))
 	{
-		write(1, "Se fué a la verga\n", 19);
-		exit(1);	
+		ft_error("el mapa introducido no cumple las características necesarias.\n\
+Por favor pruebe con otro mapa", map);
 	}
+	map->moves = 0;
+	map->mlx = mlx_init();
+	init_images(map);
 	map->win = mlx_new_window(map->mlx, map->win_width, \
 				map->win_height, "mtacunan solong");
-	get_table(map, filename);
+	if (!map->obstacle || !map->exit || !map->floor)
+		ft_error("No se encontró una de las imágenes", map);
 	map->coins_collect = 0;
-	get_coins(map, filename);
-	put_table(map, filename);
+	put_table(map);
 }

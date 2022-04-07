@@ -6,7 +6,7 @@
 /*   By: mtacunan <mtacunan@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/12/07 22:04:36 by mtacunan          #+#    #+#             */
-/*   Updated: 2022/03/08 13:52:38 by mtacunan         ###   ########.fr       */
+/*   Updated: 2022/03/22 12:14:04 by mtacunan         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,7 +76,8 @@ char	*get_line(char *buffer)
 	if (!buffer)
 		return (NULL);
 	len = size_malloc(buffer);
-	res = ft_substr(buffer, 0, len + 1);
+	res = ft_substr(buffer, 0, len);
+	res[len] = '\0';
 	return (res);
 }
 
